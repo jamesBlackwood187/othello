@@ -14,7 +14,7 @@ Player::Player(Side side) {
      * precalculating things, etc.) However, remember that you will only have
      * 30 seconds.
      */
-     printf("IF YOUNG METRO DON'T TRUST U...\n");
+     printf("Free commit\n");
 }
 
 /*
