@@ -8,13 +8,14 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-
-    /* 
-     * TODO: Do any initialization you need to do here (setting up the board,
-     * precalculating things, etc.) However, remember that you will only have
-     * 30 seconds.
-     */
-     printf("Free commit\n");
+    inBoard = new Board();
+    mySide = side;
+    if (mySide == BLACK) {
+    	oppoSide = WHITE;
+    }
+    else {
+        oppoSide = BLACK;
+    }
 }
 
 /*
@@ -36,9 +37,40 @@ Player::~Player() {
  * return NULL.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
-    /* 
-     * TODO: Implement how moves your AI should play here. You should first
-     * process the opponent's opponents move before calculating your own move
-     */ 
-    return NULL;
+
+    inBoard->doMove(opponentsMove, oppoSide);
+    std::vector<Move> legalMoves = getLegalMoves(mySide);
+    if(legalMoves.size() == 0) { // check if no legal moves
+    	return NULL; // pass
+    }
+    else {
+        Move *chosenMove = this->pickRandomMove(legalMoves);
+        inBoard->doMove(chosenMove, mySide);
+        return chosenMove;
+    }
 }
+
+/*
+ * Gets a vector of all legal moves for the given board configuration
+ */
+std::vector<Move> Player::getLegalMoves(Side side) {
+    std::vector<Move> moveList;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Move *cMove = new Move(i,j);
+            if (inBoard->checkMove(cMove, side) == true) {
+                moveList.push_back(*cMove);
+            }
+            delete cMove;
+        }
+    }
+    return moveList;
+}
+
+
+
+Move *Player::pickRandomMove(std::vector<Move> legalMoves) {
+	int randomIndex = rand() % legalMoves.size();
+	Move *myMove= &legalMoves[randomIndex];
+	return myMove;
+} 

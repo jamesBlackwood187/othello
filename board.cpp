@@ -1,5 +1,5 @@
 #include "board.h"
-
+#define bSIZE 64
 /*
  * Make a standard 8x8 othello board and initialize it to the standard setup.
  */
@@ -178,3 +178,4 @@ void Board::setBoard(char data[]) {
         }
     }
 }
+
