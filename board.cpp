@@ -104,7 +104,7 @@ bool Board::checkMove(Move *m, Side side) {
 /*
  * Modifies the board to reflect the specified move.
  */
-void Board::doMove(Move *m, Side side) {
+void Board::doBoardMove(Move *m, Side side) {
     // A NULL move means pass.
     if (m == NULL) return;
 

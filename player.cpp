@@ -8,7 +8,8 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    inBoard = new Board();
+   
+    gBoard = new Board();
     mySide = side;
     if (mySide == BLACK) {
     	oppoSide = WHITE;
@@ -22,6 +23,7 @@ Player::Player(Side side) {
  * Destructor for the player.
  */
 Player::~Player() {
+	delete gBoard;
 }
 
 /*
@@ -30,7 +32,7 @@ Player::~Player() {
  * or if the opponent passed on the last move, then opponentsMove will be NULL.
  *
  * msLeft represents the time your AI has left for the total game, in
- * milliseconds. doMove() must take no longer than msLeft, or your AI will
+ * milliseconds. doMove( must take no longer than msLeft, or your AI will
  * be disqualified! An msLeft value of -1 indicates no time limit.
  *
  * The move returned must be legal; if there are no valid moves for your side,
@@ -38,39 +40,130 @@ Player::~Player() {
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
-    inBoard->doMove(opponentsMove, oppoSide);
-    std::vector<Move> legalMoves = getLegalMoves(mySide);
-    if(legalMoves.size() == 0) { // check if no legal moves
-    	return NULL; // pass
-    }
-    else {
-        Move *chosenMove = this->pickRandomMove(legalMoves);
-        inBoard->doMove(chosenMove, mySide);
-        return chosenMove;
-    }
+    gBoard->doBoardMove(opponentsMove, oppoSide);
+
+    std::vector<Move*> moveVec = getLegalMoves(mySide);
+    Move *chosenMove = spaceValueHeuristic(moveVec);
+    gBoard->doBoardMove(chosenMove, mySide);
+    return chosenMove;
 }
 
 /*
  * Gets a vector of all legal moves for the given board configuration
  */
-std::vector<Move> Player::getLegalMoves(Side side) {
-    std::vector<Move> moveList;
+std::vector<Move*> Player::getLegalMoves(Side side) {
+    std::vector<Move*> moveList;
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             Move *cMove = new Move(i,j);
-            if (inBoard->checkMove(cMove, side) == true) {
-                moveList.push_back(*cMove);
+            if (gBoard->checkMove(cMove, side) == true) {
+                moveList.push_back(cMove);
             }
-            delete cMove;
         }
     }
     return moveList;
 }
 
 
-
-Move *Player::pickRandomMove(std::vector<Move> legalMoves) {
-	int randomIndex = rand() % legalMoves.size();
-	Move *myMove= &legalMoves[randomIndex];
-	return myMove;
+/* Picks the first available move */ 
+Move *Player::pickFirstAvailableMove() {
+	for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Move *cMove = new Move(i,j);
+            if (gBoard->checkMove(cMove, mySide)) {
+                return cMove;
+            }
+        }
+    }
+    return NULL;
 } 
+
+
+/* Picks a random move from a set of moves */ 
+Move *Player::randomMove(std::vector<Move*> moveList) {
+	if (moveList.size() == 0) {
+		return NULL;
+	}
+	int randomIndex = rand() % moveList.size();
+	Move *rMove = moveList[randomIndex];
+	return rMove;
+}
+
+
+/* 
+ * Simple Heuristic to beat SimplePlayer AI based on scoring positions
+ *
+ * We rank squares on the board according to the values presented in recitation.
+ *
+ * Corners have a score of 2
+ * Edges have a score of 1
+ * Edges adjacent to a corner have a score of -1
+ * Diagonal to corners have score -2
+ * All other squares have score 0
+ * The function goes through the passed set of legal moves and simply
+ * selects the square with the highest score.
+ *
+ * This heuristic can be used to beat Simple Player in most games.
+ */
+Move *Player::spaceValueHeuristic(std::vector<Move*> moveList) {
+	int maxScore = -10;
+	Move* bestMove = NULL;
+    
+    // Iterate through move list and evaluate a move score
+	for(unsigned int i = 0; i < moveList.size(); i++) {
+        Move *currMove = moveList[i];
+        if(isEdge(currMove)) {// check is move is on an edge
+        	if(isCorner(currMove)) { //additional check for corner move
+                currMove->score = 2;
+        	}
+        	else if(isAdjCorner(currMove)) { // check if adjacent edge to corner
+                currMove->score = -1;
+        	}
+        	else { // normal edge
+                currMove->score = 1;
+        	}
+        }
+        else if(isCaddy(currMove)) { // is diagonal to corner, aka worst square on the board
+            currMove->score = -2;
+        } 
+        else { // square is "standard"
+        	currMove->score = 0;
+        }
+
+        // check if this move is better than our current best move
+        if (currMove->score > maxScore) {
+        	bestMove = currMove;
+        	maxScore = currMove->score;
+        }
+    }
+    return bestMove;
+}
+
+/* Checks if a move is on an edge */
+bool Player::isEdge(Move *currentMove) {
+	int x = currentMove->x;
+	int y = currentMove->y;
+    return (x == 0) || (y == 0) || (x == 7) ||  (y == 7);
+}
+
+/* checks if a move is on a corner */
+bool Player::isCorner(Move *currentMove) {
+	int x = currentMove->x;
+	int y = currentMove->y;
+    return (x == 0 && y == 0) || (x == 7 && y == 0) || (x == 0 && y == 7) || (x == 7 && y == 7);
+}
+
+/* Checks if a move is directly adjacent to corner */ 
+bool Player::isAdjCorner(Move *currentMove) {
+	int x = currentMove->x;
+	int y = currentMove->y;
+    return (x == 0 && y == 1) || (x == 1 && y == 0) || (x == 0 && y == 6) || (x == 6 && y == 0) || 
+           (x == 7 && y == 1) || (x == 1 && y == 7) || (x == 7 && y == 6) || (x == 6 && y == 7);
+}
+
+/* Checks if move is diagonal to a corner */
+bool Player::isCaddy(Move *currentMove) {
+	int x = currentMove->x;
+	int y = currentMove->y;
+    return (x == 1 && y == 1) || (x == 6 && y == 1) || (x == 1 && y == 6) || (x == 6 && y == 6);
+}
