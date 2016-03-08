@@ -41,31 +41,35 @@ Player::~Player() {
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     gBoard->doBoardMove(opponentsMove, oppoSide);
     Move *chosenMove = NULL;
+    int score = 0;
+
     if(!gBoard->hasMoves(mySide)) {
     	return chosenMove;
     }   
 
     std::vector<Move*> moveVec = getLegalMoves(gBoard, mySide);
-
     
+    /* minimax testing algorithm */ 
     if (testingMinimax) {
-        int score = miniMax(gBoard, 2, NULL, true, mySide);
+        score = miniMax(gBoard, 2, NULL, true, mySide);
         return gBoard->bestMove;
     }
     else {
-    	////// Choose method below for heuristic+algo //////////
+    	/**** Choose method below for heuristic+algo *****/
         
+        /* Uncomment below to use simple algo that prioritized corners and edges */
         // chosenMove = spaceValueHeuristic(moveVec); 
         // return chosenMove;
 
-        int score = miniMax(gBoard, 3, NULL, true, mySide);
+        score = miniMax(gBoard, 3, NULL, true, mySide);
+        fprintf(stderr, "Current projected score: %d\n", score);
         gBoard->doBoardMove(gBoard->bestMove, mySide);
         return gBoard->bestMove;
     }
 }
 
 /*
- * Gets a vector of all legal moves for the given board configuration
+ * Gets a vector of all legal moves for the given board configuration for a given side
  */
 std::vector<Move*> Player::getLegalMoves(Board *cBoard, Side side) {
     std::vector<Move*> moveList;
@@ -107,9 +111,9 @@ Move *Player::randomMove(std::vector<Move*> moveList) {
 
 
 /* 
- * Simple scoring heuristic to beat SimplePlayer AI based on scoring positions
+ * Simple AI to beat SimplePlayer. Looks at available moves and picks the best square.s
  *
- * We rank squares on the board according to the values presented in recitation.
+ * We rank squares on the board according to:
  *
  * Corners have a score of 2
  * Edges have a score of 1
@@ -187,7 +191,7 @@ bool Player::isCaddy(Move *currentMove) {
 /* 
  * Minimax algorithm.
  * Refered to https://en.wikipedia.org/wiki/Minimax for pseudocode
- *
+ * Implements a basic minimax algorithm to a desired depth.
  *
  */
 int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer, Side side) {
@@ -198,13 +202,14 @@ int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer,
     	return 4 * mobilityScore(currBoard, mySide) + 3 * piecesScore(currBoard, mySide); // scoring heuristic can be changed here
     }
 
-    if(maxPlayer) { // maximizing player
+    if(maxPlayer) { // maximizing player 
     	int bestVal = -1000;
     	// For each move in move set, make the move then evaluate outcome
         for(unsigned int j = 0; j < moveSet.size(); j++) {
-        	Board *childBoard = currBoard->copy();
-        	childBoard->doBoardMove(moveSet[j],mySide);
+        	Board *childBoard = currBoard->copy(); 
+        	childBoard->doBoardMove(moveSet[j],mySide); // make current move
         	int val = miniMax(childBoard, depth - 1, bestMove, false, oppoSide);
+        	// compare to current best node
         	if(val > bestVal) {
         		bestVal = val;
         		bestMove = moveSet[j];
@@ -216,7 +221,7 @@ int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer,
         return bestVal;
     }
 
-    else { // minimizing player
+    else { // minimizing player, similar approach as maximizing player
     	int bestVal = 1000;
         for(unsigned int j = 0; j < moveSet.size(); j++) {
         	Board *childBoard = currBoard->copy();
@@ -248,6 +253,6 @@ int Player::piecesScore(Board *daBoard, Side side) {
 int Player::mobilityScore(Board *daBoard, Side side) {
     	std::vector<Move *> myMoves = getLegalMoves(daBoard, mySide);
     	std::vector<Move *> oppoMoves = getLegalMoves(daBoard, oppoSide);
-    	return myMoves.size() - oppoMoves.size();
+    	return (myMoves.size() - oppoMoves.size());
     
 }
