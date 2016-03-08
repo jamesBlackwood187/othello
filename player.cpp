@@ -58,7 +58,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         // chosenMove = spaceValueHeuristic(moveVec); 
         // return chosenMove;
 
-        int score = miniMax(gBoard, 4, NULL, true, mySide);
+        int score = miniMax(gBoard, 3, NULL, true, mySide);
         gBoard->doBoardMove(gBoard->bestMove, mySide);
         return gBoard->bestMove;
     }
@@ -107,7 +107,7 @@ Move *Player::randomMove(std::vector<Move*> moveList) {
 
 
 /* 
- * Simple Heuristic to beat SimplePlayer AI based on scoring positions
+ * Simple scoring heuristic to beat SimplePlayer AI based on scoring positions
  *
  * We rank squares on the board according to the values presented in recitation.
  *
@@ -186,18 +186,21 @@ bool Player::isCaddy(Move *currentMove) {
 
 /* 
  * Minimax algorithm.
+ * Refered to https://en.wikipedia.org/wiki/Minimax for pseudocode
+ *
  *
  */
 int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer, Side side) {
     std::vector<Move*> moveSet = getLegalMoves(currBoard, side);
     
+    // Check if depth is reached or we are at a terminal node
     if (depth == 0 || moveSet.size() == 0) {
-    	//fprintf(stderr, "%d\n", piecesScore(currBoard, mySide) );
-    	return piecesScore(currBoard, mySide);
+    	return 4 * mobilityScore(currBoard, mySide) + 3 * piecesScore(currBoard, mySide); // scoring heuristic can be changed here
     }
 
-    if(maxPlayer) {
+    if(maxPlayer) { // maximizing player
     	int bestVal = -1000;
+    	// For each move in move set, make the move then evaluate outcome
         for(unsigned int j = 0; j < moveSet.size(); j++) {
         	Board *childBoard = currBoard->copy();
         	childBoard->doBoardMove(moveSet[j],mySide);
@@ -205,14 +208,15 @@ int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer,
         	if(val > bestVal) {
         		bestVal = val;
         		bestMove = moveSet[j];
-        		currBoard->bestMove = bestMove;
+        		currBoard->bestMove = bestMove; // set the "node's" best move
         	}
         	delete childBoard;
         }
         currBoard->bestMove = bestMove;
         return bestVal;
     }
-    else {
+
+    else { // minimizing player
     	int bestVal = 1000;
         for(unsigned int j = 0; j < moveSet.size(); j++) {
         	Board *childBoard = currBoard->copy();
