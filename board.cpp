@@ -10,6 +10,7 @@ Board::Board() {
     taken.set(4 + 8 * 4);
     black.set(4 + 8 * 3);
     black.set(3 + 8 * 4);
+    bestMove = NULL;
 }
 
 /*

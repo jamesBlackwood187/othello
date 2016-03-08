@@ -2,6 +2,8 @@
 #define __COMMON_H__
 
 #include <vector>
+#include <cstdio>  
+
 
 enum Side { 
     WHITE, BLACK
