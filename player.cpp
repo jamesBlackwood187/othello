@@ -28,7 +28,8 @@ Player::~Player() {
 }
 
 /*
- * Compute the next move given the opponent's last move. Your AI is
+ * FINAL 
+ *Compute the next move given the opponent's last move. Your AI is
  * expected to keep track of the board on its own. If this is the first move,
  * or if the opponent passed on the last move, then opponentsMove will be NULL.
  *
