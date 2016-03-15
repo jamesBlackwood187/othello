@@ -22,14 +22,19 @@ public:
     bool isCorner(Move *currentMove);
     bool isAdjCorner(Move *currentMove);
     bool isCaddy(Move *currentMove);
-    int miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer, Side side);
-    int piecesScore(Board *daBoard, Side side);
-    int mobilityScore(Board *daBoard, Side side);
+    double miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer, Side side);
+    double piecesScore(Board *daBoard, Side side);
+    double mobilityScore(Board *daBoard, Side side);
+    double earlyMidGameScore(Board *daBoard, Side side);
+    double lateGameScore(Board *daBoard, Side side);
+    double cornerScore(Board *daBoard);
+
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;
     Side mySide;
     Side oppoSide;
     Board *gBoard;
+    int count;
 
 };
 

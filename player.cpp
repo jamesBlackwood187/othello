@@ -17,6 +17,7 @@ Player::Player(Side side) {
     else {
         oppoSide = BLACK;
     }
+    count = 0;
 }
 
 /*
@@ -40,8 +41,9 @@ Player::~Player() {
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     gBoard->doBoardMove(opponentsMove, oppoSide);
+    count++;
     Move *chosenMove = NULL;
-    int score = 0;
+    double score = 0;
 
     if(!gBoard->hasMoves(mySide)) {
     	return chosenMove;
@@ -62,8 +64,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         // return chosenMove;
 
         score = miniMax(gBoard, 3, NULL, true, mySide);
-        fprintf(stderr, "Current projected score: %d\n", score);
+        fprintf(stderr, "The Count: %d, Current projected score: %f \n", count, score);
         gBoard->doBoardMove(gBoard->bestMove, mySide);
+        count++;
         return gBoard->bestMove;
     }
 }
@@ -194,21 +197,26 @@ bool Player::isCaddy(Move *currentMove) {
  * Implements a basic minimax algorithm to a desired depth.
  *
  */
-int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer, Side side) {
+double Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer, Side side) {
     std::vector<Move*> moveSet = getLegalMoves(currBoard, side);
     
     // Check if depth is reached or we are at a terminal node
     if (depth == 0 || moveSet.size() == 0) {
-    	return 4 * mobilityScore(currBoard, mySide) + 3 * piecesScore(currBoard, mySide); // scoring heuristic can be changed here
+    	if (count < 8) {
+            return earlyMidGameScore(currBoard, side);
+        }
+        else {
+            return lateGameScore(currBoard, side);
+        }
     }
 
     if(maxPlayer) { // maximizing player 
-    	int bestVal = -1000;
+    	double bestVal = -1000.0;
     	// For each move in move set, make the move then evaluate outcome
         for(unsigned int j = 0; j < moveSet.size(); j++) {
         	Board *childBoard = currBoard->copy(); 
         	childBoard->doBoardMove(moveSet[j],mySide); // make current move
-        	int val = miniMax(childBoard, depth - 1, bestMove, false, oppoSide);
+        	double val = miniMax(childBoard, depth - 1, bestMove, false, oppoSide);
         	// compare to current best node
         	if(val > bestVal) {
         		bestVal = val;
@@ -222,11 +230,11 @@ int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer,
     }
 
     else { // minimizing player, similar approach as maximizing player
-    	int bestVal = 1000;
+    	double bestVal = 1000.0;
         for(unsigned int j = 0; j < moveSet.size(); j++) {
         	Board *childBoard = currBoard->copy();
         	childBoard->doBoardMove(moveSet[j],oppoSide);
-        	int val = miniMax(childBoard, depth - 1, bestMove, true, mySide);
+        	double val = miniMax(childBoard, depth - 1, bestMove, true, mySide);
         	if(val < bestVal) {
         		bestVal = val;
         		bestMove = moveSet[j];
@@ -240,19 +248,55 @@ int Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlayer,
 }
 
 /* Scoring heuristic based on difference in pieces on the board */
-int Player::piecesScore(Board *daBoard, Side side) {
+double Player::piecesScore(Board *daBoard, Side side) {
     if(side == BLACK) {
-    	return daBoard->countBlack() - daBoard->countWhite();
+    	return ((double) daBoard->countBlack() - (double) daBoard->countWhite()) / ((double) daBoard->countBlack() + (double) daBoard->countWhite());
     }
     else {
-        return daBoard->countWhite() - daBoard->countBlack();
+        return ( (double) daBoard->countWhite() - (double) daBoard->countBlack()) / ((double) daBoard->countBlack() +  (double) daBoard->countWhite());
     }
 }
 
+double Player::cornerScore(Board *daBoard) {
+    int myCount = 0;
+    int oppoCount = 0;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Move *cMove = new Move(i,j);
+            if (isCorner(cMove) || isEdge(cMove)) {
+                if(daBoard->get(mySide, cMove->x, cMove->y)) {
+                    myCount+=2;
+                }
+                else if (daBoard->get(oppoSide, cMove->x, cMove->y)) {
+                    oppoCount+=2;
+                }
+            }
+            delete cMove;
+        }
+    }
+    if (myCount + oppoCount == 0) {
+        return 0;
+    }
+    return ((double) myCount -  (double) oppoCount) / ( (double) myCount + (double) oppoCount);
+}
+
 /* Scoring heuristic based on number of available moves for each player */
-int Player::mobilityScore(Board *daBoard, Side side) {
+double Player::mobilityScore(Board *daBoard, Side side) {
     	std::vector<Move *> myMoves = getLegalMoves(daBoard, mySide);
     	std::vector<Move *> oppoMoves = getLegalMoves(daBoard, oppoSide);
-    	return (myMoves.size() - oppoMoves.size());
-    
+        if (myMoves.size() + oppoMoves.size() == 0) {
+            return 0.0;
+        }
+    	return  ((double) myMoves.size() -  (double) oppoMoves.size()) / ( (double) myMoves.size() + (double) oppoMoves.size());
 }
+
+/* Scoring heuristic that overweighte available mobility */
+double Player::earlyMidGameScore(Board *daBoard, Side side) {
+	return mobilityScore(daBoard, side) + piecesScore(daBoard, side) + cornerScore(daBoard);
+}
+
+
+/* Scoring heuristic that overweights pieces count */
+double Player::lateGameScore(Board *daBoard, Side side) {
+	return mobilityScore(daBoard, side) + 3.0 * piecesScore(daBoard, side) + 2.0 * cornerScore(daBoard);
+} 

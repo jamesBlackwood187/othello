@@ -1,3 +1,6 @@
-Caltech CS2 Assignment 9: Othello
+Othello- James Blackwood:
 
-See [assignment9_part1.html](http://htmlpreview.github.io/?https://github.com/caltechcs2/othello/blob/master/assignment9_part1.html) and [assignment9_part2.html](http://htmlpreview.github.io/?https://github.com/caltechcs2/othello/blob/master/assignment9_part2.html)
+I worked on the project by myself all strategy, design, and implementation for the project was done by me.
+
+
+The main improvements to the AI came in improving the scoring heuristic to capture mobility, coin count, and corner considerations. I have modified the AI to weight these consideration differently for different stages in the game. My general strategy looks to keep mobile in the early game, then look to box the opponent in by capturing corners and edges.  I now beat constant time player handedly most games. (Although when I lose, I generally lose pretty badly).
