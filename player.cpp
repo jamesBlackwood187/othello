@@ -202,7 +202,7 @@ double Player::miniMax(Board *currBoard, int depth, Move* bestMove, bool maxPlay
     
     // Check if depth is reached or we are at a terminal node
     if (depth == 0 || moveSet.size() == 0) {
-    	if (count < 8) {
+    	if (count < 6) {
             return earlyMidGameScore(currBoard, side);
         }
         else {
@@ -298,5 +298,5 @@ double Player::earlyMidGameScore(Board *daBoard, Side side) {
 
 /* Scoring heuristic that overweights pieces count */
 double Player::lateGameScore(Board *daBoard, Side side) {
-	return mobilityScore(daBoard, side) + 3.0 * piecesScore(daBoard, side) + 2.0 * cornerScore(daBoard);
+	return mobilityScore(daBoard, side) + 3.5 * piecesScore(daBoard, side) + 7.0 * cornerScore(daBoard);
 } 
